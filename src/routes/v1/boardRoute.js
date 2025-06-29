@@ -1,6 +1,7 @@
-import e from 'express'
 import express from 'express'
 import { StatusCodes } from 'http-status-codes'
+import { boardValidation } from '~/validations/boardValidation'
+import { boardController } from '~/controllers/boardController'
 
 const Router = express.Router()
 
@@ -11,11 +12,6 @@ Router.route('/')
       timestamp: new Date().toISOString()
     })
   })
-  .post((req, res) => {
-    res.status(StatusCodes.CREATED).json({
-      message: 'Board created successfully',
-      timestamp: new Date().toISOString()
-    })
-  })
+  .post(boardValidation.createNew, boardController.createNew)
 
-export const boardRoutes = Router
+export const boardRoute = Router
