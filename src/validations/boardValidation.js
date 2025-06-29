@@ -1,4 +1,5 @@
 import Joi from 'joi'
+import ApiError from '~/utils/ApiError'
 import { StatusCodes } from 'http-status-codes'
 
 const createNew = async (req, res, next) => {
@@ -15,19 +16,12 @@ const createNew = async (req, res, next) => {
   })
 
   try {
-    console.log(req.body)
-
     // abortEarly: false allows all validation errors to be returned
     // This means that if there are multiple validation errors, they will all be returned
     await correctValidation.validateAsync(req.body, { abortEarly: false })
-
-    // next()
-
-    res.status(StatusCodes.CREATED).json({ message: 'Board created successfully from validation' })
+    next() // Proceed to the next middleware or controller if validation passes
   } catch (error) {
-    res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({
-      errors: new Error(error).message
-    })
+    next(new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, new Error(error).message))
   }
 
 }
