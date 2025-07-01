@@ -32,9 +32,17 @@ const findOneById = async (id) => {
   } catch (error) { throw new Error(error) }
 }
 
+// aggregate function to get board details
+const getDetails = async (id) => {
+  try {
+    return await GET_DB().collection(BOARD_COLLECTION_NAME).findOne({ _id: new ObjectId(String(id)) })
+  } catch (error) { throw new Error(error) }
+}
+
 export const boardModel = {
   BOARD_COLLECTION_NAME,
   BOARD_COLLECTION_SCHEMA,
   createNew,
-  findOneById
+  findOneById,
+  getDetails
 }
