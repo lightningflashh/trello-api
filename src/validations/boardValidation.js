@@ -1,6 +1,7 @@
 import Joi from 'joi'
 import ApiError from '~/utils/ApiError'
 import { StatusCodes } from 'http-status-codes'
+import { BOARD_TYPES } from '~/utils/constants'
 
 const createNew = async (req, res, next) => {
   const correctValidation = Joi.object({
@@ -12,7 +13,8 @@ const createNew = async (req, res, next) => {
       'string.trim': 'Title cannot have leading or trailing spaces',
       'any.required': 'Title is required'
     }),
-    description: Joi.string().min(5).max(256).required().trim().strict()
+    description: Joi.string().min(5).max(256).required().trim().strict(),
+    type: Joi.string().valid(BOARD_TYPES.PUBLIC, BOARD_TYPES.PRIVATE).required()
   })
 
   try {
