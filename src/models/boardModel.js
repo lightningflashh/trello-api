@@ -63,7 +63,7 @@ const getDetails = async (id) => {
         }
       }
     ]).toArray()
-    return result[0] || {} // Return the first element or an empty object if no results
+    return result[0] || null
   } catch (error) { throw new Error(error) }
 }
 
