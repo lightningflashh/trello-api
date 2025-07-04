@@ -16,5 +16,5 @@ Router.route('/')
 
 Router.route('/:id')
   .get(boardController.getDetails)
-  .put()
+  .put(boardValidation.update, boardController.update)
 export const boardRoute = Router

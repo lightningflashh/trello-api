@@ -25,7 +25,7 @@ const findOneById = async (id) => {
 const pushCardToColumn = async (card) => {
   try {
     // Update the column to include the new card ID in the cardOrderIds array
-    await GET_DB().collection(COLUMN_COLLECTION_NAME).findOneAndUpdate(
+    return await GET_DB().collection(COLUMN_COLLECTION_NAME).findOneAndUpdate(
       { _id: new ObjectId(String(card.columnId)) },
       { $push: { cardOrderIds: String(card._id) } },
       { returnDocument: 'after' } // 'after' returns the updated document

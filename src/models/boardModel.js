@@ -18,6 +18,7 @@ const BOARD_COLLECTION_SCHEMA = Joi.object({
   updatedAt: Joi.date().timestamp('javascript').default(null),
   _destroyed: Joi.boolean().default(false)
 })
+const INVALID_UPDATE_FIELDS = ['_id', 'createdAt']
 
 const validateBoard = async (data) => {
   return await BOARD_COLLECTION_SCHEMA.validateAsync(data, { abortEarly: false })
@@ -70,10 +71,26 @@ const getDetails = async (id) => {
 const pushColumnToBoard = async (column) => {
   try {
     // Update the board to include the new column ID in the columnOrderIds array
-    await GET_DB().collection(BOARD_COLLECTION_NAME).findOneAndUpdate(
+    return await GET_DB().collection(BOARD_COLLECTION_NAME).findOneAndUpdate(
       { _id: new ObjectId(String(column.boardId)) },
       { $push: { columnOrderIds: String(column._id) } },
       { returnDocument: 'after' } // 'after' returns the updated document
+    )
+  } catch (error) { throw new Error(error) }
+}
+
+const update = async (boardId, updateData) => {
+  try {
+    // Validate the update data against the schema
+    Object.keys(updateData).forEach(field => {
+      if (INVALID_UPDATE_FIELDS.includes(field)) {
+        delete updateData[field]
+      }
+    })
+    return await GET_DB().collection(BOARD_COLLECTION_NAME).findOneAndUpdate(
+      { _id: new ObjectId(String(boardId)) },
+      { $set: updateData },
+      { returnDocument: 'after' }
     )
   } catch (error) { throw new Error(error) }
 }
@@ -84,6 +101,7 @@ export const boardModel = {
   createNew,
   findOneById,
   getDetails,
-  pushColumnToBoard
+  pushColumnToBoard,
+  update
 }
 
