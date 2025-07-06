@@ -79,6 +79,17 @@ const pushColumnToBoard = async (column) => {
   } catch (error) { throw new Error(error) }
 }
 
+const pullColumnFromBoard = async (column) => {
+  try {
+    // Update the board to remove the column ID from the columnOrderIds array
+    return await GET_DB().collection(BOARD_COLLECTION_NAME).findOneAndUpdate(
+      { _id: new ObjectId(String(column.boardId)) },
+      { $pull: { columnOrderIds: String(column._id) } },
+      { returnDocument: 'after' } // 'after' returns the updated document
+    )
+  } catch (error) { throw new Error(error) }
+}
+
 const update = async (boardId, updateData) => {
   try {
     // Validate the update data against the schema
@@ -105,6 +116,7 @@ export const boardModel = {
   findOneById,
   getDetails,
   pushColumnToBoard,
+  pullColumnFromBoard,
   update
 }
 
