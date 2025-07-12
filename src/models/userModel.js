@@ -60,7 +60,7 @@ const findOneByEmail = async (emailValue) => {
   try {
     const result = await GET_DB()
       .collection(USER_COLLECTION_NAME)
-      .findOne({ email: emailValue })
+      .findOne(emailValue)
 
     return result
   } catch (error) {
