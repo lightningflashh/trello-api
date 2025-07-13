@@ -91,15 +91,13 @@ const login = async (reqBody) => {
     const accessToken = JwtProvider.generateToken(
       { userId: existingUser._id, email: existingUser.email },
       env.ACCESS_TOKEN_SECRET_SIGNATURE,
-      // env.ACCESS_TOKEN_LIFE
-      5
+      env.ACCESS_TOKEN_LIFE
     )
 
     const refreshToken = JwtProvider.generateToken(
       { userId: existingUser._id, email: existingUser.email },
       env.REFRESH_TOKEN_SECRET_SIGNATURE,
-      // env.REFRESH_TOKEN_LIFE
-      15
+      env.REFRESH_TOKEN_LIFE
     )
 
     return { ...pickUser(existingUser), accessToken, refreshToken }
@@ -128,8 +126,7 @@ const refreshToken = async (clientRefreshToken) => {
     const accessToken = await JwtProvider.generateToken(
       userInfo,
       env.ACCESS_TOKEN_SECRET_SIGNATURE,
-      5 // 5 giây để test accessToken hết hạn
-      // env.ACCESS_TOKEN_LIFE
+      env.ACCESS_TOKEN_LIFE
     )
 
     return { accessToken }
