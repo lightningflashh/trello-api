@@ -11,6 +11,7 @@ import { MailerSendProvider } from '~/providers/MailerSendProvider'
 
 import { env } from '~/config/environment'
 import { JwtProvider } from '~/providers/JwtProvider'
+import { CloudinaryProvider } from '~/providers/CloudinaryProvider'
 
 const createNew = async (reqBody) => {
   // eslint-disable-next-line no-useless-catch
@@ -135,7 +136,7 @@ const refreshToken = async (clientRefreshToken) => {
   }
 }
 
-const update = async (userId, reqBody) => {
+const update = async (userId, reqBody, userAvatarFile) => {
   try {
     const existingUser = await userModel.findOneById(userId)
     if (!existingUser) throw new ApiError(StatusCodes.NOT_FOUND, 'User not found')
@@ -150,6 +151,13 @@ const update = async (userId, reqBody) => {
         throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Current password is incorrect')
       }
       updatedUser = await userModel.update(existingUser._id, { password: bcrypt.hashSync(reqBody.new_password, 10) })
+    } else if (userAvatarFile) {
+      // Upload to Cloudinary
+      const uploadResult = await CloudinaryProvider.streamUpload(userAvatarFile.buffer, 'users')
+      // Save avatar URL to db
+      updatedUser = await userModel.update(existingUser._id, {
+        avatar: uploadResult.secure_url // Lưu URL của ảnh đã upload
+      })
     } else {
       // Case 2: Cập nhật các thông tin khác
       updatedUser = await userModel.update(existingUser._id, reqBody)
