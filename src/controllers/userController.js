@@ -60,10 +60,18 @@ const refreshToken = async (req, res, next) => {
   } catch (error) { next(new ApiError(StatusCodes.FORBIDDEN, 'Invalid refresh token, please login again')) }
 }
 
+const update = async (req, res, next) => {
+  try {
+    const updatedUser = await userService.update(req.jwtDecoded._id, req.body, req.file)
+    return res.status(StatusCodes.OK).json(updatedUser)
+  } catch (error) { next(error) }
+}
+
 export const userController = {
   createNew,
   verifyAccount,
   login,
   logout,
-  refreshToken
+  refreshToken,
+  update
 }

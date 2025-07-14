@@ -11,6 +11,7 @@ import { MailerSendProvider } from '~/providers/MailerSendProvider'
 
 import { env } from '~/config/environment'
 import { JwtProvider } from '~/providers/JwtProvider'
+import { CloudinaryProvider } from '~/providers/CloudinaryProvider'
 
 const createNew = async (reqBody) => {
   // eslint-disable-next-line no-useless-catch
@@ -88,13 +89,13 @@ const login = async (reqBody) => {
     }
 
     // Tạo access token và refresh token
-    const accessToken = JwtProvider.generateToken(
+    const accessToken = await JwtProvider.generateToken(
       { userId: existingUser._id, email: existingUser.email },
       env.ACCESS_TOKEN_SECRET_SIGNATURE,
       env.ACCESS_TOKEN_LIFE
     )
 
-    const refreshToken = JwtProvider.generateToken(
+    const refreshToken = await JwtProvider.generateToken(
       { userId: existingUser._id, email: existingUser.email },
       env.REFRESH_TOKEN_SECRET_SIGNATURE,
       env.REFRESH_TOKEN_LIFE
@@ -135,10 +136,42 @@ const refreshToken = async (clientRefreshToken) => {
   }
 }
 
+const update = async (userId, reqBody, userAvatarFile) => {
+  try {
+    const existingUser = await userModel.findOneById(userId)
+    if (!existingUser) throw new ApiError(StatusCodes.NOT_FOUND, 'User not found')
+    if (!existingUser.isActive) throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Account not verified')
+
+    // Cập nhật thông tin người dùng
+    let updatedUser = {}
+
+    // Case 1: Cập nhật mật khẩu
+    if (reqBody.current_password && reqBody.new_password) {
+      if (!bcrypt.compareSync(reqBody.current_password, existingUser.password)) {
+        throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Current password is incorrect')
+      }
+      updatedUser = await userModel.update(existingUser._id, { password: bcrypt.hashSync(reqBody.new_password, 10) })
+    } else if (userAvatarFile) {
+      // Upload to Cloudinary
+      const uploadResult = await CloudinaryProvider.streamUpload(userAvatarFile.buffer, 'users')
+      // Save avatar URL to db
+      updatedUser = await userModel.update(existingUser._id, {
+        avatar: uploadResult.secure_url // Lưu URL của ảnh đã upload
+      })
+    } else {
+      // Case 2: Cập nhật các thông tin khác
+      updatedUser = await userModel.update(existingUser._id, reqBody)
+    }
+
+    // Cập nhật thông tin người dùng
+    return pickUser(updatedUser)
+  } catch (error) { throw error }
+}
 
 export const userService = {
   createNew,
   verifyAccount,
   login,
-  refreshToken
+  refreshToken,
+  update
 }

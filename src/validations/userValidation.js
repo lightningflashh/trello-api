@@ -23,8 +23,6 @@ const verifyAccount = async (req, res, next) => {
     token: Joi.string().required()
   })
 
-  console.log('verifyAccount called with:', req)
-
   try {
     await correctCondition.validateAsync(req.body, { abortEarly: false })
     next()
@@ -47,8 +45,24 @@ const login = async (req, res, next) => {
   }
 }
 
+const update = async (req, res, next) => {
+  const correctCondition = Joi.object({
+    displayName: Joi.string().trim().strict(),
+    currentPassword: Joi.string().pattern(PASSWORD_RULE).message(`currentPassword ${PASSWORD_RULE_MESSAGE}`),
+    newPassword: Joi.string().pattern(PASSWORD_RULE).message(`newPassword ${PASSWORD_RULE_MESSAGE}`)
+  })
+  try {
+    // allowUnknown: true để bỏ qua các trường không có trong schema
+    await correctCondition.validateAsync(req.body, { abortEarly: false, allowUnknown: true })
+    next()
+  } catch (error) {
+    next(new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, new Error(error).message))
+  }
+}
+
 export const userValidation = {
   createNew,
   verifyAccount,
-  login
+  login,
+  update
 }

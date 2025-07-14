@@ -48,7 +48,7 @@ const findOneById = async (userId) => {
   try {
     const result = await GET_DB()
       .collection(USER_COLLECTION_NAME)
-      .findOne({ _id: new ObjectId(String(userId)) })
+      .findOne({ userId })
 
     return result
   } catch (error) {
