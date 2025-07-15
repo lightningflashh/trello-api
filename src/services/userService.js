@@ -90,13 +90,13 @@ const login = async (reqBody) => {
 
     // Tạo access token và refresh token
     const accessToken = await JwtProvider.generateToken(
-      { userId: existingUser._id, email: existingUser.email },
+      { _id: existingUser._id, email: existingUser.email },
       env.ACCESS_TOKEN_SECRET_SIGNATURE,
       env.ACCESS_TOKEN_LIFE
     )
 
     const refreshToken = await JwtProvider.generateToken(
-      { userId: existingUser._id, email: existingUser.email },
+      { _id: existingUser._id, email: existingUser.email },
       env.REFRESH_TOKEN_SECRET_SIGNATURE,
       env.REFRESH_TOKEN_LIFE
     )
