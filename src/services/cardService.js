@@ -20,14 +20,24 @@ const createNew = async (reqBody) => {
   } catch (error) { throw error }
 }
 
-const update = async (cardId, reqBody, cardCoverFile) => {
+const update = async (cardId, reqBody, cardCoverFile, infoJwtDecoded) => {
   try {
+    const updateData = { ...reqBody, updatedAt: Date.now() }
     let updatedCard = {}
     if (cardCoverFile) {
       const uploadResult = await CloudinaryProvider.streamUpload(cardCoverFile.buffer, 'card-covers')
-      updatedCard = await cardModel.update(cardId, { ...reqBody, cover: uploadResult.secure_url, updatedAt: Date.now() })
+      updatedCard = await cardModel.update(cardId, { cover: uploadResult.secure_url })
+    } else if (updateData.commentToAdd) {
+      // Tạo dữ liệu comment để thêm vào db
+      const commentData = {
+        ...updateData.commentToAdd,
+        commentedAt: Date.now(),
+        userId: infoJwtDecoded._id,
+        userEmail: infoJwtDecoded.email
+      }
+      updatedCard = await cardModel.unshiftNewComment(cardId, commentData)
     } else {
-      updatedCard = await cardModel.update(cardId, { ...reqBody, updatedAt: Date.now() })
+      updatedCard = await cardModel.update(cardId, updateData)
     }
     return updatedCard
   } catch (error) { throw error }
