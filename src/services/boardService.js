@@ -43,9 +43,9 @@ const getDetails = async (userId, boardId) => {
   } catch (error) { throw error }
 }
 
-const update = async (boardId, updateData) => {
+const update = async (userId, boardId, updateData) => {
   try {
-    const board = await boardModel.getDetails(boardId)
+    const board = await boardModel.getDetails(userId, boardId)
     if (!board) {
       throw new ApiError(StatusCodes.NOT_FOUND, 'Board not found')
     }

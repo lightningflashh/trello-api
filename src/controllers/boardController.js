@@ -23,9 +23,10 @@ const getDetails = async (req, res, next) => {
 
 const update = async (req, res, next) => {
   try {
+    const userId = req.jwtDecoded._id
     const boardId = req.params.id
 
-    const updatedBoard = await boardService.update(boardId, req.body)
+    const updatedBoard = await boardService.update(userId, boardId, req.body)
 
     res.status(StatusCodes.OK).json(updatedBoard)
   } catch (error) { next(error) }
