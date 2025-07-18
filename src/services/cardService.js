@@ -36,6 +36,9 @@ const update = async (cardId, reqBody, cardCoverFile, infoJwtDecoded) => {
         userEmail: infoJwtDecoded.email
       }
       updatedCard = await cardModel.unshiftNewComment(cardId, commentData)
+    } else if (updateData.incomingMemberInfo) {
+      // TH ADD hoặc REMOVE thành viên vào Card
+      updatedCard = await cardModel.updateMembers(cardId, updateData.incomingMemberInfo)
     } else {
       updatedCard = await cardModel.update(cardId, updateData)
     }
