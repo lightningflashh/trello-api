@@ -141,7 +141,7 @@ const update = async (boardId, updateData) => {
   } catch (error) { throw new Error(error) }
 }
 
-const getBoards = async (userId, page, itemsPerPage) => {
+const getBoards = async (userId, page, itemsPerPage, queryFilter) => {
   try {
     const queryCondition = [
       // Điều kiện 01: Board chưa bị xóa
@@ -154,6 +154,18 @@ const getBoards = async (userId, page, itemsPerPage) => {
         ]
       }
     ]
+    // Nếu có queryFilter thì thêm vào điều kiện
+    if (queryFilter) {
+      // queryFilter[key] (queryFilter[title] <=> phía FE gửi lên là q[title])
+      Object.keys(queryFilter).forEach(key => {
+        // // Phân biệt chữ hoa chữ thường trong tìm kiếm
+        // queryCondition.push({ [key]: { $regex: queryFilter[key] } })
+
+        // Không phân biệt chữ hoa chữ thường trong tìm kiếm
+        queryCondition.push({ [key]: { $regex: new RegExp(queryFilter[key], 'i') } })
+      })
+    }
+
     const query = await GET_DB().collection(BOARD_COLLECTION_NAME).aggregate(
       [
         { $match: { $and: queryCondition } },
