@@ -17,7 +17,7 @@ const createNew = async (reqBody) => {
   // eslint-disable-next-line no-useless-catch
   try {
     // Check xem đã có user nào với email này chưa
-    const existingUser = await userModel.findOneByEmail({ email: reqBody.email })
+    const existingUser = await userModel.findOneByEmail(reqBody.email)
     if (existingUser) {
       throw new ApiError(StatusCodes.CONFLICT, 'Email already exists')
     }
@@ -61,7 +61,7 @@ const createNew = async (reqBody) => {
 
 const verifyAccount = async (reqBody) => {
   try {
-    const existingUser = await userModel.findOneByEmail({ email: reqBody.email })
+    const existingUser = await userModel.findOneByEmail(reqBody.email)
     if (!existingUser) throw new ApiError(StatusCodes.NOT_FOUND, 'User not found')
     if (existingUser.isActive) throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Account already verified')
     if (reqBody.token !== existingUser.verifyToken) throw new ApiError(StatusCodes.UNAUTHORIZED, 'Invalid verification token')
@@ -81,7 +81,7 @@ const verifyAccount = async (reqBody) => {
 
 const login = async (reqBody) => {
   try {
-    const existingUser = await userModel.findOneByEmail({ email: reqBody.email })
+    const existingUser = await userModel.findOneByEmail(reqBody.email)
     if (!existingUser) throw new ApiError(StatusCodes.NOT_FOUND, 'User not found')
     if (!existingUser.isActive) throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Account not verified')
     if (!bcrypt.compareSync(reqBody.password, existingUser.password)) {
