@@ -8,6 +8,9 @@ import { APIs_V1 } from '~/routes/v1/index.js'
 import { errorHandlingMiddleware } from '~/middlewares/errorHandlingMiddleware'
 import { corsOptions } from './config/cors'
 import cookieParser from 'cookie-parser'
+import socketIo from 'socket.io'
+import http from 'http'
+import { inviteUserToBoardSocket } from '~/sockets/inviteUserToBoardSocket'
 
 const START_SERVER = () => {
   const app = express()
@@ -29,12 +32,20 @@ const START_SERVER = () => {
   // Middleware to handle errors
   app.use(errorHandlingMiddleware)
 
+  // Create a server instance
+  const server = http.createServer(app)
+  const io = socketIo(server, { cors: corsOptions })
+  io.on('connection', socket => {
+    inviteUserToBoardSocket(socket)
+  })
+
   if (env.BUILD_MODE === 'production') {
-    app.listen(process.env.PORT, () => {
+    // Dùng server.listen() thay vì app.listen() vì server đã gồm cả app và socket.io
+    server.listen(process.env.PORT, () => {
       console.log(`Running at production port ${process.env.PORT}`)
     })
   } else {
-    app.listen(env.LOCAL_DEV_APP_PORT, env.LOCAL_DEV_APP_HOST, async () => {
+    server.listen(env.LOCAL_DEV_APP_PORT, env.LOCAL_DEV_APP_HOST, async () => {
       console.log(`Running at ${env.LOCAL_DEV_APP_HOST}:${env.LOCAL_DEV_APP_PORT}/`)
     })
   }

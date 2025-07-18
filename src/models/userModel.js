@@ -60,7 +60,6 @@ const findOneByEmail = async (emailValue) => {
     const result = await GET_DB()
       .collection(USER_COLLECTION_NAME)
       .findOne({ email: emailValue })
-
     return result
   } catch (error) {
     throw new Error(error)
