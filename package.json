@@ -5,7 +5,7 @@
   "author": "Cheesethank",
   "description": "Trello with MERN stack",
   "engines": {
-    "node": ">=18.x"
+    "node": "20.x"
   },
   "scripts": {
     "lint": "eslint src --ext js --report-unused-disable-directives --max-warnings 0",
