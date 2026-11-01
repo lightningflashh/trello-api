@@ -1,4 +1,4 @@
-/* eslint-disable no-useless-catch */
+
 import { columnModel } from '~/models/columnModel'
 import { cardModel } from '~/models/cardModel'
 import { boardModel } from '~/models/boardModel'
