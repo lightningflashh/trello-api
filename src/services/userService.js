@@ -1,177 +1,281 @@
+import { StatusCodes } from "http-status-codes";
+import { userModel } from "~/models/userModel";
+import ApiError from "~/utils/ApiError";
 
-import { StatusCodes } from 'http-status-codes'
-import { userModel } from '~/models/userModel'
-import ApiError from '~/utils/ApiError'
+import bcrypt from "bcryptjs";
+import { v4 as uuidv4 } from "uuid";
+import { pickUser } from "~/utils/formatters";
+import { WEBSITE_DOMAIN } from "~/utils/constants";
+import { MailerSendProvider } from "~/providers/MailerSendProvider";
 
-import bcrypt from 'bcryptjs'
-import { v4 as uuidv4 } from 'uuid'
-import { pickUser } from '~/utils/formatters'
-import { WEBSITE_DOMAIN } from '~/utils/constants'
-import { MailerSendProvider } from '~/providers/MailerSendProvider'
-
-import { env } from '~/config/environment'
-import { JwtProvider } from '~/providers/JwtProvider'
-import { CloudinaryProvider } from '~/providers/CloudinaryProvider'
+import { env } from "~/config/environment";
+import { JwtProvider } from "~/providers/JwtProvider";
+import { CloudinaryProvider } from "~/providers/CloudinaryProvider";
 
 const createNew = async (reqBody) => {
-
   try {
     // Check xem đã có user nào với email này chưa
-    const existingUser = await userModel.findOneByEmail(reqBody.email)
+    const existingUser = await userModel.findOneByEmail(reqBody.email);
     if (existingUser) {
-      throw new ApiError(StatusCodes.CONFLICT, 'Email already exists')
+      throw new ApiError(StatusCodes.CONFLICT, "Email already exists");
     }
 
     // Tạo data lưu vào CSDL
     // Lấy cái tên trước cái @
-    const nameFromEmail = reqBody.email.split('@')[0]
+    const nameFromEmail = reqBody.email.split("@")[0];
 
     const newUser = {
       email: reqBody.email,
       password: bcrypt.hashSync(reqBody.password, 8),
       username: nameFromEmail,
       displayName: nameFromEmail,
-      verifyToken: uuidv4()
-    }
+      verifyToken: uuidv4(),
+    };
 
     // Tạo user mới
-    const createdUser = await userModel.createNew(newUser)
+    const createdUser = await userModel.createNew(newUser);
 
-    const getNewUser = await userModel.findOneById(createdUser.insertedId)
+    const getNewUser = await userModel.findOneById(createdUser.insertedId);
 
     // Gửi mail xác nhận tài khoản
-    const verificationUrl = `${WEBSITE_DOMAIN}/account/verification?email=${getNewUser.email}&token=${getNewUser.verifyToken}`
-    const customSubject = 'Trello MERN Stack Advanced: Please verify your account'
+    const verificationUrl = `${WEBSITE_DOMAIN}/account/verification?email=${getNewUser.email}&token=${getNewUser.verifyToken}`;
+    const customSubject =
+      "Trello MERN Stack Advanced: Please verify your account";
     const htmlContent = `
       <h1>Welcome to Trello MERN Stack Advanced</h1>
       <p>To complete your registration, please verify your account by clicking the link below:</p>
       <a href="${verificationUrl}">Verify Account</a>
-    `
+    `;
     const mailerSendResponse = await MailerSendProvider.sendEmail({
       to: getNewUser.email,
       toName: getNewUser.displayName,
       subject: customSubject,
-      html: htmlContent
-    })
+      html: htmlContent,
+    });
 
     // return trả về dữ liệu user mới tạo
-    return pickUser(getNewUser)
-  } catch (error) { throw error }
-}
+    return pickUser(getNewUser);
+  } catch (error) {
+    throw error;
+  }
+};
 
 const verifyAccount = async (reqBody) => {
   try {
-    const existingUser = await userModel.findOneByEmail(reqBody.email)
-    if (!existingUser) throw new ApiError(StatusCodes.NOT_FOUND, 'User not found')
-    if (existingUser.isActive) throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Account already verified')
-    if (reqBody.token !== existingUser.verifyToken) throw new ApiError(StatusCodes.UNAUTHORIZED, 'Invalid verification token')
+    const existingUser = await userModel.findOneByEmail(reqBody.email);
+    if (!existingUser)
+      throw new ApiError(StatusCodes.NOT_FOUND, "User not found");
+    if (existingUser.isActive)
+      throw new ApiError(
+        StatusCodes.NOT_ACCEPTABLE,
+        "Account already verified",
+      );
+    if (reqBody.token !== existingUser.verifyToken)
+      throw new ApiError(
+        StatusCodes.UNAUTHORIZED,
+        "Invalid verification token",
+      );
 
     // Cập nhật trạng thái tài khoản
     const updatedUser = await userModel.update(existingUser._id, {
       isActive: true,
-      verifyToken: null // Xoá token sau khi xác thực
-    })
+      verifyToken: null, // Xoá token sau khi xác thực
+    });
 
-    return pickUser(updatedUser)
-
+    return pickUser(updatedUser);
   } catch (error) {
-    throw error
+    throw error;
   }
-}
+};
 
 const login = async (reqBody) => {
   try {
-    const existingUser = await userModel.findOneByEmail(reqBody.email)
-    if (!existingUser) throw new ApiError(StatusCodes.NOT_FOUND, 'User not found')
-    if (!existingUser.isActive) throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Account not verified')
+    const existingUser = await userModel.findOneByEmail(reqBody.email);
+    if (!existingUser)
+      throw new ApiError(StatusCodes.NOT_FOUND, "User not found");
+    if (!existingUser.isActive)
+      throw new ApiError(StatusCodes.NOT_ACCEPTABLE, "Account not verified");
     if (!bcrypt.compareSync(reqBody.password, existingUser.password)) {
-      throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Invalid password')
+      throw new ApiError(StatusCodes.NOT_ACCEPTABLE, "Invalid password");
     }
 
     // Tạo access token và refresh token
     const accessToken = await JwtProvider.generateToken(
       { _id: existingUser._id, email: existingUser.email },
       env.ACCESS_TOKEN_SECRET_SIGNATURE,
-      env.ACCESS_TOKEN_LIFE
-    )
+      env.ACCESS_TOKEN_LIFE,
+    );
 
     const refreshToken = await JwtProvider.generateToken(
       { _id: existingUser._id, email: existingUser.email },
       env.REFRESH_TOKEN_SECRET_SIGNATURE,
-      env.REFRESH_TOKEN_LIFE
-    )
+      env.REFRESH_TOKEN_LIFE,
+    );
 
-    return { ...pickUser(existingUser), accessToken, refreshToken }
-
+    return { ...pickUser(existingUser), accessToken, refreshToken };
   } catch (error) {
-    throw error
+    throw error;
   }
-}
+};
 
 const refreshToken = async (clientRefreshToken) => {
   try {
     // Verify / giải mã cái refresh token xem có hợp lệ không
     const refreshTokenDecoded = await JwtProvider.verifyToken(
       clientRefreshToken,
-      env.REFRESH_TOKEN_SECRET_SIGNATURE
-    )
+      env.REFRESH_TOKEN_SECRET_SIGNATURE,
+    );
 
     // Đoạn này vì chúng ta chỉ lưu những thông tin unique và cố định của user trong token rồi,
     // vì vậy có thể lấy luôn từ decoded ra, tiết kiệm query vào DB để lấy data mới.
     const userInfo = {
       _id: refreshTokenDecoded._id,
-      email: refreshTokenDecoded.email
-    }
+      email: refreshTokenDecoded.email,
+    };
 
     // Tạo accessToken mới
     const accessToken = await JwtProvider.generateToken(
       userInfo,
       env.ACCESS_TOKEN_SECRET_SIGNATURE,
-      env.ACCESS_TOKEN_LIFE
-    )
+      env.ACCESS_TOKEN_LIFE,
+    );
 
-    return { accessToken }
+    return { accessToken };
   } catch (error) {
-    throw error
+    throw error;
   }
-}
+};
 
 const update = async (userId, reqBody, userAvatarFile) => {
   try {
-    const existingUser = await userModel.findOneById(userId)
-    if (!existingUser) throw new ApiError(StatusCodes.NOT_FOUND, 'User not found')
-    if (!existingUser.isActive) throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Account not verified')
+    const existingUser = await userModel.findOneById(userId);
+    if (!existingUser)
+      throw new ApiError(StatusCodes.NOT_FOUND, "User not found");
+    if (!existingUser.isActive)
+      throw new ApiError(StatusCodes.NOT_ACCEPTABLE, "Account not verified");
 
     // Cập nhật thông tin người dùng
-    let updatedUser = {}
+    let updatedUser = {};
 
     // Case 1: Cập nhật mật khẩu
     if (reqBody.current_password && reqBody.new_password) {
-      if (!bcrypt.compareSync(reqBody.current_password, existingUser.password)) {
-        throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Current password is incorrect')
+      if (
+        !bcrypt.compareSync(reqBody.current_password, existingUser.password)
+      ) {
+        throw new ApiError(
+          StatusCodes.NOT_ACCEPTABLE,
+          "Current password is incorrect",
+        );
       }
-      updatedUser = await userModel.update(existingUser._id, { password: bcrypt.hashSync(reqBody.new_password, 10) })
+      updatedUser = await userModel.update(existingUser._id, {
+        password: bcrypt.hashSync(reqBody.new_password, 10),
+      });
     } else if (userAvatarFile) {
       // Upload to Cloudinary
-      const uploadResult = await CloudinaryProvider.streamUpload(userAvatarFile.buffer, 'users')
+      const uploadResult = await CloudinaryProvider.streamUpload(
+        userAvatarFile.buffer,
+        "users",
+      );
       // Save avatar URL to db
       updatedUser = await userModel.update(existingUser._id, {
-        avatar: uploadResult.secure_url // Lưu URL của ảnh đã upload
-      })
+        avatar: uploadResult.secure_url, // Lưu URL của ảnh đã upload
+      });
     } else {
       // Case 2: Cập nhật các thông tin khác
-      updatedUser = await userModel.update(existingUser._id, reqBody)
+      updatedUser = await userModel.update(existingUser._id, reqBody);
     }
 
     // Cập nhật thông tin người dùng
-    return pickUser(updatedUser)
-  } catch (error) { throw error }
-}
+    return pickUser(updatedUser);
+  } catch (error) {
+    throw error;
+  }
+};
+
+const loginWithGoogle = async (googleProfile) => {
+  const { id, displayName, emails, photos } = googleProfile;
+
+  const email = emails?.[0]?.value;
+
+  if (!email) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "Email not found in Google profile",
+    );
+  }
+
+  // 1. Find user by Google ID
+  let user = await userModel.findOneByGoogleId(id);
+
+  // 2. If not found, find by email
+  if (!user) {
+    user = await userModel.findOneByEmail(email);
+
+    if (user) {
+      // Link Google account to existing user
+      await userModel.update(user._id, {
+        googleId: id,
+      });
+
+      user = await userModel.findOneById(user._id);
+    }
+  }
+
+  // 3. Create new user if not found
+  if (!user) {
+    const nameFromEmail = email.split("@")[0];
+
+    const newUser = {
+      email,
+      googleId: id,
+      username: nameFromEmail,
+      displayName,
+      avatar: photos?.[0]?.value || "",
+      isActive: true,
+    };
+
+    const createdUser = await userModel.createNew(newUser);
+
+    user = await userModel.findOneById(createdUser.insertedId);
+  }
+
+  // 4. Generate tokens for all cases
+  const accessToken = await JwtProvider.generateToken(
+    { _id: user._id, email: user.email },
+    env.ACCESS_TOKEN_SECRET_SIGNATURE,
+    env.ACCESS_TOKEN_LIFE,
+  );
+
+  const refreshToken = await JwtProvider.generateToken(
+    { _id: user._id, email: user.email },
+    env.REFRESH_TOKEN_SECRET_SIGNATURE,
+    env.REFRESH_TOKEN_LIFE,
+  );
+
+  // 5. Return user and tokens
+  return {
+    ...pickUser(user),
+    accessToken,
+    refreshToken,
+  };
+};
+
+const getCurrentUser = async (userInfo) => {
+  const user = await userModel.findOneById(userInfo._id);
+
+  if (!user) {
+    throw new ApiError(StatusCodes.NOT_FOUND, "User not found");
+  }
+
+  return pickUser(user);
+};
 
 export const userService = {
   createNew,
   verifyAccount,
   login,
   refreshToken,
-  update
-}
+  update,
+  loginWithGoogle,
+  getCurrentUser,
+};

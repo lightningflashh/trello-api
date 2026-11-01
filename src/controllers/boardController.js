@@ -1,63 +1,77 @@
-import { StatusCodes } from 'http-status-codes'
-import { boardService } from '~/services/boardService'
+import { StatusCodes } from "http-status-codes";
+import { boardService } from "~/services/boardService";
 
 const createNew = async (req, res, next) => {
   try {
-    const userId = req.jwtDecoded._id
-    const createdBoard = await boardService.createNew(userId, req.body)
+    const userId = req.jwtDecoded._id;
+    const createdBoard = await boardService.createNew(userId, req.body);
 
-    res.status(StatusCodes.CREATED).json(createdBoard)
-  } catch (error) { next(error) }
-}
+    res.status(StatusCodes.CREATED).json(createdBoard);
+  } catch (error) {
+    next(error);
+  }
+};
 
 const getDetails = async (req, res, next) => {
   try {
-    const userId = req.jwtDecoded._id
-    const boardId = req.params.id
+    const userId = req.jwtDecoded._id;
+    const boardId = req.params.id;
 
-    const board = await boardService.getDetails(userId, boardId)
+    const board = await boardService.getDetails(userId, boardId);
 
-    res.status(StatusCodes.OK).json(board)
-  } catch (error) { next(error) }
-}
+    res.status(StatusCodes.OK).json(board);
+  } catch (error) {
+    next(error);
+  }
+};
 
 const update = async (req, res, next) => {
   try {
-    const userId = req.jwtDecoded._id
-    const boardId = req.params.id
+    const userId = req.jwtDecoded._id;
+    const boardId = req.params.id;
 
-    const updatedBoard = await boardService.update(userId, boardId, req.body)
+    const updatedBoard = await boardService.update(userId, boardId, req.body);
 
-    res.status(StatusCodes.OK).json(updatedBoard)
-  } catch (error) { next(error) }
-}
+    res.status(StatusCodes.OK).json(updatedBoard);
+  } catch (error) {
+    next(error);
+  }
+};
 
 const moveCardToDifferentColumn = async (req, res, next) => {
   try {
-    const result = await boardService.moveCardToDifferentColumn(req.body)
+    const result = await boardService.moveCardToDifferentColumn(req.body);
 
-    res.status(StatusCodes.OK).json(result)
-  } catch (error) { next(error) }
-}
+    res.status(StatusCodes.OK).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
 
 const getBoards = async (req, res, next) => {
   try {
-    // console.log('getBoards controller', req)
-    const userId = req.jwtDecoded._id
+    const userId = req.jwtDecoded._id;
 
-    const { page, itemsPerPage, q } = req.query
-    const queryFilter = q
+    const { page, itemsPerPage, q } = req.query;
+    const queryFilter = q;
 
-    const boards = await boardService.getBoards(userId, page, itemsPerPage, queryFilter)
+    const boards = await boardService.getBoards(
+      userId,
+      page,
+      itemsPerPage,
+      queryFilter,
+    );
 
-    res.status(StatusCodes.OK).json(boards)
-  } catch (error) { next(error) }
-}
+    res.status(StatusCodes.OK).json(boards);
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const boardController = {
   createNew,
   getDetails,
   update,
   moveCardToDifferentColumn,
-  getBoards
-}
+  getBoards,
+};
