@@ -23,7 +23,18 @@ const START_SERVER = () => {
 
   app.use(cookieParser())
 
-  app.use(cors(corsOptions))
+  app.use((req, res, next) => {
+    const isGoogleOAuthRoute = [
+      '/v1/users/auth/google',
+      '/v1/users/auth/google/callback'
+    ].includes(req.path)
+
+    if (isGoogleOAuthRoute) {
+      return next()
+    }
+
+    return cors(corsOptions)(req, res, next)
+  })
 
   // Middleware to parse JSON request bodies
   app.use(express.json())

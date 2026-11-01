@@ -1,9 +1,5 @@
 import { env } from '~/config/environment'
-export const WHITELIST_DOMAINS = [
-  'https://trello-web-flame-iota.vercel.app',
-  env.WEBSITE_DOMAIN_PRODUCTION,
-  env.GOOGLE_CALLBACK_URL
-]
+export const WHITELIST_DOMAINS = ['https://trello-web-flame-iota.vercel.app']
 
 export const BOARD_TYPES = {
   PUBLIC: 'public',
