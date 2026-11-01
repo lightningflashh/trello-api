@@ -14,7 +14,7 @@ import { JwtProvider } from '~/providers/JwtProvider'
 import { CloudinaryProvider } from '~/providers/CloudinaryProvider'
 
 const createNew = async (reqBody) => {
-  // eslint-disable-next-line no-useless-catch
+
   try {
     // Check xem đã có user nào với email này chưa
     const existingUser = await userModel.findOneByEmail(reqBody.email)

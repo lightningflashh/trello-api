@@ -7,9 +7,28 @@ import { multerUploadMiddleware } from '~/middlewares/multerUploadMiddleware'
 
 const Router = express.Router()
 
-Router.route('/')
-  .post(authMiddleware.isAuthorized, cardValidation.createNew, cardController.createNew)
-export const cardRoute = Router
+Router.route('/:id/attachments').post(
+  authMiddleware.isAuthorized,
+  multerUploadMiddleware.upload.single('attachment'),
+  cardController.attachFileToCard
+)
 
-Router.route('/:id')
-  .put(authMiddleware.isAuthorized, multerUploadMiddleware.upload.single('cardCover'), cardValidation.update, cardController.update)
+Router.route('/').post(
+  authMiddleware.isAuthorized,
+  cardValidation.createNew,
+  cardController.createNew
+)
+
+Router.route('/:id').put(
+  authMiddleware.isAuthorized,
+  multerUploadMiddleware.upload.single('cardCover'),
+  cardValidation.update,
+  cardController.update
+)
+
+Router.route('/:id/attachments').get(
+  authMiddleware.isAuthorized,
+  cardController.getAttachmentsByCardId
+)
+
+export const cardRoute = Router
