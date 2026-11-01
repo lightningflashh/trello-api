@@ -64,7 +64,7 @@ const loginWithGoogle = async (req, res, next) => {
     })
 
     const domain =
-      env.NODE_ENV === 'production'
+      env.BUILD_MODE === 'production'
         ? env.WEBSITE_DOMAIN_PRODUCTION
         : env.WEBSITE_DOMAIN_DEVELOPMENT
 
