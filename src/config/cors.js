@@ -6,7 +6,7 @@ import ApiError from '~/utils/ApiError'
 export const corsOptions = {
   origin: function (origin, callback) {
     // Cho phép việc gọi API bằng POSTMAN trên môi trường dev,
-    if (env.BUILD_MODE === 'dev') {
+    if (['dev', 'test'].includes(env.BUILD_MODE) || !origin) {
       return callback(null, true)
     }
 

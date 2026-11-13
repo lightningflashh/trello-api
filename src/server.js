@@ -1,9 +1,5 @@
-/* eslint-disable no-console */
 import express from 'express'
 import cors from 'cors'
-import exitHook from 'async-exit-hook'
-import { CONNECT_DB, CLOSE_DB } from '~/config/mongodb'
-import { env } from '~/config/environment'
 import { APIs_V1 } from '~/routes/v1/index.js'
 import { errorHandlingMiddleware } from '~/middlewares/errorHandlingMiddleware'
 import { corsOptions } from './config/cors'
@@ -13,11 +9,18 @@ import http from 'http'
 import { inviteUserToBoardSocket } from '~/sockets/inviteUserToBoardSocket'
 import passport from '~/config/passport'
 
-const START_SERVER = () => {
+export const createApp = () => {
   const app = express()
 
-  app.use((req, res, next) => {
-    res.set('Cache-Control', 'no-store')
+  app.set('trust proxy', true)
+
+  app.disable('etag')
+
+  app.use((_req, res, next) => {
+    res.set('Cache-Control', 'no-store, must-revalidate, no-cache')
+    res.set('Pragma', 'no-cache')
+    res.set('Expires', '0')
+
     next()
   })
 
@@ -26,7 +29,8 @@ const START_SERVER = () => {
   app.use((req, res, next) => {
     const isGoogleOAuthRoute = [
       '/v1/users/auth/google',
-      '/v1/users/auth/google/callback'
+      '/v1/users/auth/google/callback',
+      '/health'
     ].includes(req.path)
 
     if (isGoogleOAuthRoute) {
@@ -43,42 +47,22 @@ const START_SERVER = () => {
 
   app.use('/v1', APIs_V1)
 
+  app.get('/health', (_req, res) => res.json({ status: 'ok' }))
+
   // Middleware to handle errors
   app.use(errorHandlingMiddleware)
 
-  // Create a server instance
+  return app
+}
+
+export const createServer = () => {
+  const app = createApp()
   const server = http.createServer(app)
   const io = socketIo(server, { cors: corsOptions })
+
   io.on('connection', (socket) => {
     inviteUserToBoardSocket(socket)
   })
 
-  if (env.BUILD_MODE === 'production') {
-    // Dùng server.listen() thay vì app.listen() vì server đã gồm cả app và socket.io
-    server.listen(process.env.PORT, () => {
-      console.log(`Running at production port ${process.env.PORT}`)
-    })
-  } else {
-    server.listen(env.LOCAL_DEV_APP_PORT, env.LOCAL_DEV_APP_HOST, async () => {
-      console.log(
-        `Running at ${env.LOCAL_DEV_APP_HOST}:${env.LOCAL_DEV_APP_PORT}/`
-      )
-    })
-  }
-
-  exitHook(() => {
-    CLOSE_DB()
-  })
-};
-
-(async () => {
-  try {
-    await CONNECT_DB()
-    console.log('Database connected successfully')
-    START_SERVER()
-    console.log('Server started successfully')
-  } catch (error) {
-    console.error('Failed to connect to the database:', error)
-    process.exit(0)
-  }
-})()
+  return server
+}

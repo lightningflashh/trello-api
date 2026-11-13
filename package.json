@@ -8,7 +8,7 @@
     "node": ">= 20.x"
   },
   "scripts": {
-    "lint": "eslint src --ext js --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint src tests --ext js --report-unused-disable-directives --max-warnings 0",
     "clean": "rm -rf build && mkdir build",
     "build-babel": "babel ./src -d ./build/src",
     "build": "npm run clean && npm run build-babel",
@@ -40,6 +40,7 @@
     "passport-google-oauth20": "^2.0.0",
     "socket.io": "^4.7.4",
     "streamifier": "^0.1.1",
+    "supertest": "^7.3.2",
     "uuid": "^9.0.1"
   },
   "devDependencies": {

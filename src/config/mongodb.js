@@ -28,7 +28,8 @@ export const CONNECT_DB = async () => {
 }
 
 export const GET_DB = () => {
-  if (!trelloDatabaseInstance) throw new Error('Database not connected. Call CONNECT_DB first.')
+  if (!trelloDatabaseInstance)
+    throw new Error('Database not connected. Call CONNECT_DB first.')
   return trelloDatabaseInstance
 }
 
